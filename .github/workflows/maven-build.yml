@@ -4,6 +4,12 @@
 # This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
 # For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
 
+# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
 name: Java CI with Maven (No Cache)
 
 on:
@@ -39,3 +45,10 @@ jobs:
           name: jar-file
           path: target/*.jar
           retention-days: 5
+- name: Cache Maven packages
+  uses: actions/cache@v3
+  with:
+    path: ~/.m2/repository
+    key: maven-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
+    restore-keys: |
+      maven-${{ runner.os }}-
