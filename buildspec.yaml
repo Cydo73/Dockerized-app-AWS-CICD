@@ -1,28 +1,35 @@
 version: 0.2
 
+env:
+  variables:
+    AWS_DEFAULT_REGION: eu-north-1
+    AWS_ACCOUNT_ID: 730076539058
+    IMAGE_REPO_NAME: cydrone/ibt-repo
+    IMAGE_TAG: latest
+
 phases:
   pre_build:
     commands:
-      - echo Logging in to Amazon ECR...
-      - aws --version
-      - aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 730076539058.dkr.ecr.eu-north-1.amazonaws.com/cydrone/ibt-repo:latest
-      - REPOSITORY_URI=730076539058.dkr.ecr.eu-north-1.amazonaws.com/cydrone/ibt-repo:latest
-      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-      - IMAGE_TAG=${COMMIT_HASH:=latest}
+      - echo "Logging into Amazon ECR..."
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME
+      - echo "Repository URI is $REPOSITORY_URI"
+  
   build:
     commands:
-      - echo Build started on `date`
-      - echo Building the Docker image...
-      - docker build -t $REPOSITORY_URI:latest .
-      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+      - echo "Build started on $(date)"
+      - echo "Building Docker image..."
+      - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
+      - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG
+  
   post_build:
     commands:
-      - echo Build completed on `date`
-      - echo Pushing the Docker image to ECR...
-      - docker push $REPOSITORY_URI:latest
+      - echo "Build completed on $(date)"
+      - echo "Pushing Docker image to ECR..."
       - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - echo "Writing image definitions file..."
+      - printf '[{"name":"app","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+
 artifacts:
   files:
-    - '**/*'
-  discard-paths: yes
-  
+    - imagedefinitions.json
